@@ -17,7 +17,7 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         method_exchangeImplementations(class_getInstanceMethod([UIViewController class], @selector(initWithNibName:bundle:)),
-                                       class_getInstanceMethod([UIViewController class], @selector(initUpdateAggregator)));
+                                       class_getInstanceMethod([UIViewController class], @selector(initUpdateAggregatorWithNibName:bundle:)));
     });
 }
 
