@@ -14,6 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
+@class FBKVOController;
+
 @protocol HTUpdatable
 
 - (void)updateContent;
@@ -25,6 +27,8 @@
 @end
 
 @interface NSObject (HTUpdateAggregator)
+
+@property (nonatomic, readonly) FBKVOController *htUpdateAggregatorKvoController;
 
 - (void)startObservingForUpdates;
 - (void)setNeedsUpdate;

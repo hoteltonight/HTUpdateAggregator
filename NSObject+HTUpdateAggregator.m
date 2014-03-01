@@ -13,10 +13,15 @@
 //
 
 #import "NSObject+HTUpdateAggregator.h"
-#import "NSObject+HTWatcher.h"
+#import "FBKVOController.h"
 #import <objc/runtime.h>
 
-static NSString const *kUpdateNeededKey = @"UpdateNeededKey";
+static char const *kUpdateNeededKey;
+static char const *kKVOControllerKey;
+
+@interface NSObject (HTUpdateAggregatorPrivate)
+
+@end
 
 @implementation NSObject (HTUpdateAggregator)
 
@@ -27,12 +32,13 @@ static NSString const *kUpdateNeededKey = @"UpdateNeededKey";
         if ([[self class] respondsToSelector:@selector(keyPathsToTriggerUpdate)])
         {
             __weak NSObject *wSelf = self;
-            [self observeKeypaths:[[self class] keyPathsToTriggerUpdate]
-                 observingOptions:NSKeyValueObservingOptionNew
-                        withBlock:^(NSString *keyPath, id object, NSDictionary *change)
-             {
-                 [wSelf setNeedsUpdate];
-             }];
+            id<HTUpdatable> updatableClass = (id<HTUpdatable>)[self class];
+
+            for (NSString *keyPath in [updatableClass keyPathsToTriggerUpdate]) {
+                [self.htUpdateAggregatorKvoController observe:self keyPath:keyPath options:NSKeyValueObservingOptionNew block:^(id observer, id object, NSDictionary *change) {
+                    [wSelf setNeedsUpdate];
+                }];
+            }
         }
     }
 }
@@ -63,6 +69,15 @@ static NSString const *kUpdateNeededKey = @"UpdateNeededKey";
     {
         [self updateContentInternal];
     }
+}
+
+- (FBKVOController *)htUpdateAggregatorKvoController {
+    FBKVOController *kvoController = objc_getAssociatedObject(self, kKVOControllerKey);
+    if (!kvoController) {
+        kvoController = [FBKVOController controllerWithObserver:self];
+        objc_setAssociatedObject(self, kKVOControllerKey, kvoController, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    return kvoController;
 }
 
 @end
