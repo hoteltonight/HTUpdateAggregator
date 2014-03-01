@@ -14,7 +14,8 @@
 
 #import <objc/runtime.h>
 #import "UIView+HTLayoutWatcher.h"
-#import "NSObject+HTWatcher.h"
+#import "NSObject+HTUpdateAggregator.h"
+#import "FBKVOController.h"
 
 @implementation UIView (HTLayoutWatcher)
 
@@ -34,12 +35,12 @@
     if (self && [self conformsToProtocol:@protocol(HTLayoutWatchable)])
     {
         __weak UIView *wSelf = self;
-        [self observeKeypaths:[[self class] keyPathsToTriggerLayout]
-             observingOptions:NSKeyValueObservingOptionNew
-                    withBlock:^(NSString *keyPath, id object, NSDictionary *change)
-                    {
-                        [wSelf setNeedsLayout];
-                    }];
+        id<HTLayoutWatchable> layoutWatchableClass = (id<HTLayoutWatchable>)[self class];
+        for (NSString *keyPath in [layoutWatchableClass keyPathsToTriggerLayout]) {
+            [self.htUpdateAggregatorKvoController observe:self keyPath:keyPath options:NSKeyValueObservingOptionNew block:^(id observer, id object, NSDictionary *change) {
+                [wSelf setNeedsLayout];
+            }];
+        }
     }
     return self;
 }
